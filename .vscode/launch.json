@@ -2,13 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      // Run Reports.Cli with F5
       "name": "Run Reports.Cli",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/Reports.Cli/bin/Debug/net9.0/Reports.Cli.dll",
-      "args": ["--export", "report.xlsx"],
+          "args": [
+        "--org", "your-org",
+        "--project", "YourProject",
+        "--team", "YourTeam"
+      ],
       "cwd": "${workspaceFolder}/Reports.Cli",
       "console": "integratedTerminal",
       "stopAtEntry": false
