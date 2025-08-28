@@ -4,33 +4,20 @@ using Reports.Core.Models;
 
 namespace Reports.Core.Services;
 
-public class AzureDevOpsService
+public class AzureDevOpsService(string organization, string project, string team, string pat)
 {
-    private readonly string _org;
-    private readonly string _project;
-    private readonly string _team;
-    private readonly string _pat;
-
-    public AzureDevOpsService(string organization, string project, string team, string pat)
-    {
-        _org = organization;
-        _project = project;
-        _team = team;
-        _pat = pat;
-    }
-
     public async Task<SprintInfo> GetCurrentSprintAsync()
     {
-        using var client = new AzureDevOpsClient(_org, _project, _team, _pat);
+        using var client = new AzureDevOpsClient(organization, project, team, pat);
         var (start, end, id, name, path) = await client.GetCurrentSprintAsync();
         return new SprintInfo(id, name, start, end, path);
     }
 
     public async Task<IReadOnlyList<WorkItemInfo>> GetWorkItemsForIterationAsync(string iterationPath)
     {
-        using var client = new AzureDevOpsClient(_org, _project, _team, _pat);
+        using var client = new AzureDevOpsClient(organization, project, team, pat);
         var ids = await client.QueryWorkItemIdsByIterationPathAsync(iterationPath);
-        if (ids.Count == 0) return Array.Empty<WorkItemInfo>();
+        if (ids.Count == 0) return [];
 
         var docs = await client.GetWorkItemsInBatchesAsync(ids);
         var items = new List<WorkItemInfo>();
@@ -55,7 +42,7 @@ public class AzureDevOpsService
 
     public async Task<IReadOnlyList<StatusChange>> GetStatusChangesTodayAsync(IEnumerable<int> workItemIds, DateTime today)
     {
-        using var client = new AzureDevOpsClient(_org, _project, _team, _pat);
+        using var client = new AzureDevOpsClient(organization, project, team, pat);
         var list = new List<StatusChange>();
         foreach (var id in workItemIds)
         {
@@ -64,20 +51,17 @@ public class AzureDevOpsService
             if (arr.Count == 0) continue;
 
 
-            string currentState = arr[0].GetProperty("fields").GetProperty("System.State").GetString() ?? "";
-            for (int i = 1; i < arr.Count; i++)
+            var currentState = arr[0].GetProperty("fields").GetProperty("System.State").GetString() ?? "";
+            for (var i = 1; i < arr.Count; i++)
             {
                 var prevState = currentState;
                 var fields = arr[i].GetProperty("fields");
                 if (!fields.TryGetProperty("System.State", out var newStateEl)) continue; // state unchanged in this revision
                 var newState = newStateEl.GetString() ?? prevState;
 
-
-                // ChangedDate lives in fields["System.ChangedDate"] (ISO string)
-                DateTime changed = fields.TryGetProperty("System.ChangedDate", out var changedEl) && changedEl.ValueKind == JsonValueKind.String
+                var changed = fields.TryGetProperty("System.ChangedDate", out var changedEl) && changedEl.ValueKind == JsonValueKind.String
                 ? DateTime.Parse(changedEl.GetString()!)
                 : DateTime.MinValue;
-
 
                 if (!string.Equals(prevState, newState, StringComparison.OrdinalIgnoreCase))
                 {

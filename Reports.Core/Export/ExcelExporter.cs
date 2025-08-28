@@ -22,7 +22,7 @@ public static class ExcelExporter
         // Current state counts
         s.Cell(8, 1).Value = "Current State";
         s.Cell(8, 2).Value = "Count";
-        int r = 9;
+        var r = 9;
         foreach (var kv in report.CurrentStateCounts.OrderBy(k => k.Key))
         {
             s.Cell(r, 1).Value = kv.Key;
@@ -50,7 +50,7 @@ public static class ExcelExporter
         d.Cell(1, 5).Value = "AssignedTo";
         d.Cell(1, 6).Value = "AssignedTo (unique)";
 
-        int i = 2;
+        var i = 2;
         foreach (var wi in report.WorkItems.OrderBy(w => w.Id))
         {
             d.Cell(i, 1).Value = wi.Id;
@@ -68,7 +68,7 @@ public static class ExcelExporter
         c.Cell(1, 2).Value = "When";
         c.Cell(1, 3).Value = "From";
         c.Cell(1, 4).Value = "To";
-        int j = 2;
+        var j = 2;
         foreach (var sc in report.StatusChangesToday.OrderBy(x => x.When))
         {
             c.Cell(j, 1).Value = sc.WorkItemId;

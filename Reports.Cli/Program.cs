@@ -10,17 +10,17 @@ using Reports.Core.Services;
     --team YourTeam
 */
 
-string? pat = Environment.GetEnvironmentVariable("AZDO_PAT");
+var pat = Environment.GetEnvironmentVariable("AZDO_PAT");
 if (string.IsNullOrWhiteSpace(pat))
 {
     Console.Error.WriteLine("ERROR: AZDO_PAT environment variable is not set.");
     return 1;
 }
 
-string org = GetArg("--org") ?? throw new ArgumentException("--org is required");
-string project = GetArg("--project") ?? throw new ArgumentException("--project is required");
-string team = GetArg("--team") ?? throw new ArgumentException("--team is required");
-string output = GetArg("--output") ?? $"DailySummary_{DateTime.Today:yyyyMMdd}.xlsx";
+var org = GetArg("--org") ?? throw new ArgumentException("--org is required");
+var project = GetArg("--project") ?? throw new ArgumentException("--project is required");
+var team = GetArg("--team") ?? throw new ArgumentException("--team is required");
+var output = GetArg("--output") ?? $"DailySummary_{DateTime.Today:yyyyMMdd}.xlsx";
 
 var svc = new AzureDevOpsService(org, project, team, pat);
 Console.WriteLine($"Fetching current sprint for {org}/{project}/{team}…");
@@ -38,7 +38,7 @@ return 0;
 static string? GetArg(string name)
 {
     var args = Environment.GetCommandLineArgs();
-    for (int i = 0; i < args.Length; i++)
+    for (var i = 0; i < args.Length; i++)
     {
         if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase))
         {

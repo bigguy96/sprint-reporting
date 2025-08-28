@@ -31,7 +31,7 @@ internal class AzureDevOpsClient : IDisposable
         var url = $"{BaseUrl}/{_team}/_apis/work/teamsettings/iterations?$timeframe=current&api-version=7.0";
         using var resp = await _http.GetAsync(url);
         resp.EnsureSuccessStatusCode();
-        using var stream = await resp.Content.ReadAsStreamAsync();
+        await using var stream = await resp.Content.ReadAsStreamAsync();
         var doc = await JsonDocument.ParseAsync(stream);
         var value = doc.RootElement.GetProperty("value");
         if (value.GetArrayLength() == 0) throw new InvalidOperationException("No current sprint found.");
@@ -59,7 +59,7 @@ internal class AzureDevOpsClient : IDisposable
         using var content = new StringContent(JsonSerializer.Serialize(wiql), Encoding.UTF8, "application/json");
         using var resp = await _http.PostAsync($"{BaseUrl}/_apis/wit/wiql?api-version=7.0", content);
         resp.EnsureSuccessStatusCode();
-        using var stream = await resp.Content.ReadAsStreamAsync();
+        await using var stream = await resp.Content.ReadAsStreamAsync();
         var doc = await JsonDocument.ParseAsync(stream);
         var arr = doc.RootElement.GetProperty("workItems");
         var ids = new List<int>(arr.GetArrayLength());
