@@ -1,24 +1,25 @@
-﻿using Reports.Core.Export;
+﻿using Microsoft.Extensions.Configuration;
+using Reports.Core.Export;
 using Reports.Core.Services;
-using Reports.Cli;
-using Microsoft.Extensions.Configuration;
 
-class Program
+namespace Reports.Cli;
+
+internal class Program
 {
-    static async Task<int> Main(string[] args)
+    private static async Task<int> Main(string[] args)
     {
         var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         var config = new ConfigurationBuilder()
-        .AddUserSecrets(typeof(Program).Assembly, optional: true)
-        .AddEnvironmentVariables(prefix: "AZDO_")
-        .AddWindowsCredentialManager(["AzDo:Org", "AzDo:Project", "AzDo:Team", "AzDo:Token"])
-        .Build();
+            .AddUserSecrets(typeof(Program).Assembly, optional: true)
+            .AddEnvironmentVariables(prefix: "AZDO_")
+            .AddWindowsCredentialManager(["AzDo:Org", "AzDo:Project", "AzDo:Team", "AzDo:Token"])
+            .Build();
 
-        string? org = config["AzDo:Org"];
-        string? project = config["AzDo:Project"];
-        string? team = config["AzDo:Team"];
-        string? token = config["AzDo:Token"];
-        string output = config["Output"] ?? Path.Combine(myDocuments, $"DailySummary_{DateTime.Today:yyyyMMdd}.xlsx");
+        var org = config["AzDo:Org"];
+        var project = config["AzDo:Project"];
+        var team = config["AzDo:Team"];
+        var token = config["AzDo:Token"];
+        var output = config["Output"] ?? Path.Combine(myDocuments, $"DailySummary_{DateTime.Today:yyyyMMdd}.xlsx");
 
         var svc = new AzureDevOpsService(org!, project!, team!, token!);
         Console.WriteLine($"Fetching sprint for {org}/{project}/{team}...");
