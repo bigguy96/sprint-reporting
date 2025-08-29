@@ -10,10 +10,6 @@ internal class AzureDevOpsClient : IDisposable
     private readonly string? _org;
     private readonly string? _project;
     private readonly string? _team;
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
     private string BaseUrl => $"https://dev.azure.com/{_org}/{_project}";
 
     public AzureDevOpsClient(string organization, string project, string team, string pat)
