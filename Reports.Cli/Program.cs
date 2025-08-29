@@ -1,49 +1,36 @@
 ﻿using Reports.Core.Export;
 using Reports.Core.Services;
+using Reports.Cli;
+using Microsoft.Extensions.Configuration;
 
-// Usage:
-// dotnet run --project Reports.Cli -- --org your-org --project YourProject --team YourTeam
-/* 
-    dotnet run --project Reports.Cli -- `
-    --org your-org `
-    --project YourProject `
-    --team YourTeam
-*/
-
-var pat = Environment.GetEnvironmentVariable("AZDO_PAT");
-if (string.IsNullOrWhiteSpace(pat))
+class Program
 {
-    Console.Error.WriteLine("ERROR: AZDO_PAT environment variable is not set.");
-    return 1;
-}
-
-var org = GetArg("--org") ?? throw new ArgumentException("--org is required");
-var project = GetArg("--project") ?? throw new ArgumentException("--project is required");
-var team = GetArg("--team") ?? throw new ArgumentException("--team is required");
-var output = GetArg("--output") ?? $"DailySummary_{DateTime.Today:yyyyMMdd}.xlsx";
-
-var svc = new AzureDevOpsService(org, project, team, pat);
-Console.WriteLine($"Fetching current sprint for {org}/{project}/{team}…");
-var report = await svc.BuildDailyReportAsync();
-
-Console.WriteLine($"Found sprint '{report.Sprint.Name}' {report.Sprint.Start:yyyy-MM-dd} → {report.Sprint.End:yyyy-MM-dd}");
-Console.WriteLine($"Work items: {report.WorkItems.Count}");
-Console.WriteLine($"New today: {report.NewItemsToday}, New in sprint: {report.NewItemsInSprint}");
-
-ExcelExporter.SaveReport(report, output);
-Console.WriteLine($"Excel saved → {output}");
-
-return 0;
-
-static string? GetArg(string name)
-{
-    var args = Environment.GetCommandLineArgs();
-    for (var i = 0; i < args.Length; i++)
+    static async Task<int> Main(string[] args)
     {
-        if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase))
-        {
-            return (i + 1 < args.Length) ? args[i + 1] : null;
-        }
+        var myDocuments = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        var config = new ConfigurationBuilder()
+        .AddUserSecrets(typeof(Program).Assembly, optional: true)
+        .AddEnvironmentVariables(prefix: "AZDO_")
+        .AddWindowsCredentialManager(["AzDo:Org", "AzDo:Project", "AzDo:Team", "AzDo:Token"])
+        .Build();
+
+        string? org = config["AzDo:Org"];
+        string? project = config["AzDo:Project"];
+        string? team = config["AzDo:Team"];
+        string? token = config["AzDo:Token"];
+        string output = config["Output"] ?? Path.Combine(myDocuments, $"DailySummary_{DateTime.Today:yyyyMMdd}.xlsx");
+
+        var svc = new AzureDevOpsService(org!, project!, team!, token!);
+        Console.WriteLine($"Fetching sprint for {org}/{project}/{team}...");
+        var report = await svc.BuildDailyReportAsync();
+
+        Console.WriteLine($"Sprint: '{report.Sprint.Name}' {report.Sprint.Start:yyyy-MM-dd} → {report.Sprint.End:yyyy-MM-dd}");
+        Console.WriteLine($"Work items: {report.WorkItems.Count}");
+        Console.WriteLine($"New today: {report.NewItemsToday}, New in sprint: {report.NewItemsInSprint}");
+
+        ExcelExporter.SaveReport(report, output);
+        Console.WriteLine($"Excel saved → {output}");
+
+        return 0;
     }
-    return null;
 }
